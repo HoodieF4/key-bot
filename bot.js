@@ -88,23 +88,6 @@ async function registerCommands() {
 }
 
 // -------- Key validation (calls your site) --------
-async function redeemOnSite(key, userId) {
-  const url = `${SITE_BASE_URL.replace(/\/$/, "")}/api/redeem`;
-
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key, userId })
-  });
-
-  let data = null;
-  try { data = await resp.json(); } catch {}
-
-  if (resp.ok && data?.ok === true) return { ok: true };
-
-  return { ok: false, status: resp.status, error: data?.error || "invalid_key" };
-}
-
 const key = interaction.fields.getTextInputValue("key_input")
   .trim()
   .toUpperCase();
@@ -117,7 +100,6 @@ if (!pattern.test(key)) {
     ephemeral: true
   });
 }
-
 // -------- Failure log rate-limit (1 log per hour per user) --------
 function shouldLogInvalid(userId, cb) {
   const t = nowMs();
