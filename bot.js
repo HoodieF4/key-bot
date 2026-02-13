@@ -215,31 +215,27 @@ client.on("interactionCreate", async (interaction) => {
     // Modal submit -> validate key
     if (interaction.isModalSubmit()) {
       if (interaction.customId === "verify_key_modal") {
+        // Force uppercase + remove spaces
         const key = interaction.fields.getTextInputValue("key_input")
           .trim()
           .toUpperCase();
 
-        const pattern = /^FK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-
-        if (!pattern.test(key)) {
+        // Must be exactly 22 characters: FK-XXXX-XXXX-XXXX-XXXX
+        if (key.length !== 22) {
           return interaction.reply({
-            content: "❌ Invalid key format.\nExample: `FK-9A2F-KD81-ZXQ4-7M2P`",
+            content: "❌ Invalid key format.\nYour key must look like: `FK-XXXX-XXXX-XXXX-XXXX`",
             ephemeral: true
           });
         }
-        
-        const result = await redeemOnSite(key, interaction.user.id);
 
-        if (!result.ok) {
-          shouldLogInvalid(interaction.user.id, async (logIt) => {
-            if (logIt) await postLog(client, `❌ <@${interaction.user.id}> — invalid key attempt.`);
-          });
-
+        // Extra: must start with FK-
+        if (!key.startsWith("FK-")) {
           return interaction.reply({
-            content: "❌ Invalid or expired key. Please generate a new one and try again.",
+            content: "❌ Key must start with `FK-`.",
             ephemeral: true
           });
         }
+
 
         const expiresAt = await grantRoleForOneHour(interaction);
         await postLog(client, `✅ <@${interaction.user.id}> — key approved. Access granted for **1 hour**.`);
