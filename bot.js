@@ -257,6 +257,7 @@ if (interaction.commandName === "panel") {
       "2. Paste your key\n" +
       "3. Enjoy!"
     )
+    .setColor(#FF0000)
     .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 👿" });
 
   if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
@@ -264,14 +265,14 @@ if (interaction.commandName === "panel") {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setLabel("Generate Key")
-      .setEmoji("🔑")
+      .setEmoji("\🔑")
       .setStyle(ButtonStyle.Link)
       .setURL(LOCKR_URL),
 
     new ButtonBuilder()
       .setCustomId("verify_key")
-      .setLabel("Verify Key")
-      .setEmoji("✅")
+      .setLabel("Redeem Key")
+      .setEmoji("\✅")
       .setStyle(ButtonStyle.Success)
   );
 
