@@ -217,6 +217,19 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.customId === "verify_key_modal") {
         const key = interaction.fields.getTextInputValue("key_input").trim();
 
+        const key = interaction.fields.getTextInputValue("key_input")
+          .trim()
+          .toUpperCase();
+
+        const pattern = /^FK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+
+        if (!pattern.test(key)) {
+          return interaction.reply({
+            content: "❌ Invalid key format.\nExample: `FK-9A2F-KD81-ZXQ4-7M2P`",
+            ephemeral: true
+          });
+        }
+        
         const result = await redeemOnSite(key, interaction.user.id);
 
         if (!result.ok) {
