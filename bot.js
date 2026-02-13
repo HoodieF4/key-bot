@@ -264,12 +264,14 @@ client.on("interactionCreate", async (interaction) => {
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Generate Key")
+          .setEmoji("🔑")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
           .setCustomId("redeem_help")
           .setLabel("Redeem Key")
+          .setEmoji("✅)
           .setStyle(ButtonStyle.Success)
   );
 
