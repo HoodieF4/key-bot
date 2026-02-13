@@ -25,6 +25,7 @@ const LOCKR_URL = process.env.LOCKR_URL;            // https://lockr.so/Q03XMO7D
 
 const ACCESS_ROLE_ID = process.env.ACCESS_ROLE_ID || "1471729359449751694";
 const PANEL_CHANNEL_ID = process.env.PANEL_CHANNEL_ID || "1471730464296534209";
+const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "1471730794631266557";
 
 // Panel look
 const PANEL_TITLE = "🔞 Get Your FREE NSFW Content!";
@@ -287,11 +288,6 @@ if (interaction.commandName === "panel") {
   if (!ch) {
     return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
   }
-
-  await ch.send({ embeds: [embed], components: [row] });
-
-  return interaction.reply({ content: "✅ Panel message posted in the panel channel.", ephemeral: true });
-      );
 
       return interaction.reply({ embeds: [embed], components: [row] });
     }
