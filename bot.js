@@ -90,17 +90,48 @@ async function registerCommands() {
 // -------- Key validation (calls your site) --------
 async function redeemOnSite(key, userId) {
   const url = `${SITE_BASE_URL.replace(/\/$/, "")}/api/redeem`;
+
   const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ key, userId })
   });
 
-  if (resp.ok) return { ok: true };
-
   let data = null;
   try { data = await resp.json(); } catch {}
-  return { ok: false, status: resp.status, error: data?.error || "unknown" };
+
+  // ✅ Only accept if the API explicitly returns { ok: true }
+  if (resp.ok && data?.ok === true) return { ok: true };
+
+  return {
+    ok: false,
+    status: resp.status,
+    error: data?.error || "invalid_key"
+  };
+}
+``s`
+
+> Isto resolve mesmo que o teu site esteja a devolver 200 com `{ok:false}`.
+
+---
+
+## 2) (Recomendado) Adiciona validação por REGEX no bot
+Mesmo com min/max 22, o user pode meter 22 chars “qualquer”. Então valida formato:
+
+Dentro do modal submit, **antes** de chamar `redeemOnSite`:
+
+```js
+const key = interaction.fields.getTextInputValue("key_input")
+  .trim()
+  .toUpperCase();
+
+const pattern = /^FK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+
+if (!pattern.test(key)) {
+  return interaction.reply({
+    content: "❌ Invalid key format.\nExample: `FK-9A2F-KD81-ZXQ4-7M2P`",
+    ephemeral: true
+  });
 }
 
 // -------- Failure log rate-limit (1 log per hour per user) --------
