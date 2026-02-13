@@ -244,31 +244,43 @@ client.on("interactionCreate", async (interaction) => {
 
     if (interaction.commandName === "panel") {
       const embed = new EmbedBuilder()
-        .setTitle(PANEL_TITLE)
+        .setTitle("🔞 Get Your FREE NSFW Content!")
         .setDescription(
-          "Follow the steps below to unlock access:\n\n" +
-          "**1) Generate a Key**\n" +
-          "• Click **Generate Key** and complete the tasks\n\n" +
-          "**2) Verify Your Key**\n" +
-          "• Click **Verify Key** and paste your key\n\n" +
-          "✅ Access duration: **1 hour**"
+          "Follow the simple steps below to unlock your NSFW content:\n\n" +
+          "🔑 **Get Your Key**\n" +
+          "1. Click **Generate Key**\n" +
+          "2. Follow the site steps\n" +
+          "3. Copy your key\n\n" +
+          "✅ **Redeem Your Key**\n" +
+          "1. Click **Redeem Key**\n" +
+          "2. Paste your key\n" +
+          "3. Enjoy!"
         )
-        .setFooter({ text: "FrostKey • Keys • Access • Daily Drops" });
+        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
 
-      if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
+      // You said you'll add the image later:
+      // embed.setImage("https://YOUR_IMAGE_URL_HERE");
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Generate Key")
-          .setEmoji("🔑")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
-          .setCustomId("verify_key")
-          .setLabel("Verify Key")
-          .setEmoji("✅")
+          .setCustomId("redeem_help")
+          .setLabel("Redeem Key")
           .setStyle(ButtonStyle.Success)
+  );
+
+  const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+  if (!ch) {
+    return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
+  }
+
+  await ch.send({ embeds: [embed], components: [row] });
+
+  return interaction.reply({ content: "✅ Panel message posted in the panel channel.", ephemeral: true });
       );
 
       return interaction.reply({ embeds: [embed], components: [row] });
