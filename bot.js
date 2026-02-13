@@ -283,14 +283,7 @@ if (interaction.commandName === "panel") {
   await ch.send({ embeds: [embed], components: [row] });
   return interaction.reply({ content: "✅ Panel posted.", ephemeral: true });
 }
-
-  const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
-  if (!ch) {
-    return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
-  }
-
-      return interaction.reply({ embeds: [embed], components: [row] });
-    }
+    
   } catch (err) {
     console.error(err);
     if (interaction.isRepliable()) {
