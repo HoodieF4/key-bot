@@ -244,17 +244,19 @@ client.on("interactionCreate", async (interaction) => {
         .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 😈" });
 
       // You said you'll add the image later:
-        .setImage("https://media.discordapp.net/attachments/1146456316290797678/1471765991062245487/image_3.png?ex=69902064&is=698ecee4&hm=eff5a60ad0ac2b9c91353feb71af65225bedd6625fd88d43d16b80da3b13b5ee&=&format=webp&quality=lossless&width=2168&height=1355");
+        .setImage("https://media.discordapp.net/attachments/1146456316290797678/1471767031295639703/image_4.png?ex=6990215c&is=698ecfdc&hm=72ce3503ad3f87539e2f79512cbbb1ef3ca8a555ccdc7a4633f9ef214b07717c&=&format=webp&quality=lossless&width=2168&height=1355");
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setLabel("🔑 Generate Key")
+          .setLabel("Generate Key")
+          .setEmoji("🔑")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
           .setCustomId("redeem_help")
-          .setLabel("✅ Redeem Key")
+          .setLabel("Redeem Key")
+          .setEmoji("✅")
           .setStyle(ButtonStyle.Success)
       );
 
