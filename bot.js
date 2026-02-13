@@ -241,7 +241,7 @@ client.on("interactionCreate", async (interaction) => {
           "2. Paste your key\n" +
           "3. Enjoy!"
         )
-        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
+        .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 😈" });
 
       // You said you'll add the image later:
       // embed.setImage("https://YOUR_IMAGE_URL_HERE");
@@ -283,17 +283,17 @@ client.on("interactionCreate", async (interaction) => {
           "2. Paste your key\n" +
           "3. Enjoy!"
         )
-        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
+        .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 😈" });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setLabel("Generate Key")
+          .setLabel("🔑 Generate Key")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
           .setCustomId("redeem_help")
-          .setLabel("Redeem Key")
+          .setLabel("✅ Redeem Key")
           .setStyle(ButtonStyle.Success)
       );
 
