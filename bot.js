@@ -249,15 +249,15 @@ if (interaction.commandName === "panel") {
     .setDescription(
       "Follow the simple steps below to unlock your content:\n\n" +
       "🔑 **Get Your Key**\n" +
-      "1. Click **Generate Key**\n" +
-      "2. Complete the tasks\n" +
-      "3. Copy your key\n\n" +
+      "> 1. Click **Generate Key**\n" +
+      "> 2. Complete the tasks\n" +
+      "> 3. Copy your key\n\n" +
       "✅ **Verify Your Key**\n" +
-      "1. Click **Verify Key**\n" +
-      "2. Paste your key\n" +
-      "3. Enjoy!"
+      "> 1. Click **Verify Key**\n" +
+      "> 2. Paste your key\n" +
+      "> 3. Enjoy!"
     )
-    .setColor(#FF0000)
+    .setColor('#FF0000')
     .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 👿" });
 
   if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
