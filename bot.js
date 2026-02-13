@@ -264,15 +264,13 @@ if (interaction.commandName === "panel") {
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setLabel("Generate Key")
-      .setEmoji("\🔑")
+      .setLabel("🔑 Generate Key")
       .setStyle(ButtonStyle.Link)
       .setURL(LOCKR_URL),
 
     new ButtonBuilder()
       .setCustomId("verify_key")
-      .setLabel("Redeem Key")
-      .setEmoji("\✅")
+      .setLabel("✅ Redeem Key")
       .setStyle(ButtonStyle.Success)
   );
 
