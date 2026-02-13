@@ -271,7 +271,7 @@ client.on("interactionCreate", async (interaction) => {
         new ButtonBuilder()
           .setCustomId("redeem_help")
           .setLabel("Redeem Key")
-          .setEmoji("✅)
+          .setEmoji("✅")
           .setStyle(ButtonStyle.Success)
   );
 
