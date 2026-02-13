@@ -88,18 +88,7 @@ async function registerCommands() {
 }
 
 // -------- Key validation (calls your site) --------
-const key = interaction.fields.getTextInputValue("key_input")
-  .trim()
-  .toUpperCase();
 
-const pattern = /^FK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-
-if (!pattern.test(key)) {
-  return interaction.reply({
-    content: "❌ Invalid key format.\nExample: `FK-9A2F-KD81-ZXQ4-7M2P`",
-    ephemeral: true
-  });
-}
 // -------- Failure log rate-limit (1 log per hour per user) --------
 function shouldLogInvalid(userId, cb) {
   const t = nowMs();
