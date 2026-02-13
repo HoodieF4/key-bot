@@ -100,14 +100,9 @@ async function redeemOnSite(key, userId) {
   let data = null;
   try { data = await resp.json(); } catch {}
 
-  // ✅ Only accept if the API explicitly returns { ok: true }
   if (resp.ok && data?.ok === true) return { ok: true };
 
-  return {
-    ok: false,
-    status: resp.status,
-    error: data?.error || "invalid_key"
-  };
+  return { ok: false, status: resp.status, error: data?.error || "invalid_key" };
 }
 
 const key = interaction.fields.getTextInputValue("key_input")
@@ -237,37 +232,35 @@ client.on("interactionCreate", async (interaction) => {
     // Modal submit -> validate key
     if (interaction.isModalSubmit()) {
       if (interaction.customId === "verify_key_modal") {
-        // Force uppercase + remove spaces
         const key = interaction.fields.getTextInputValue("key_input")
           .trim()
           .toUpperCase();
 
-        // Must be exactly 22 characters: FK-XXXX-XXXX-XXXX-XXXX
-        if (key.length !== 22) {
+        const pattern = /^FK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+        if (!pattern.test(key)) {
           return interaction.reply({
-            content: "❌ Invalid key format.\nYour key must look like: `FK-XXXX-XXXX-XXXX-XXXX`",
+            content: "❌ Invalid key format.\nExample: `FK-9A2F-KD81-ZXQ4-7M2P`",
             ephemeral: true
           });
         }
 
-        // Extra: must start with FK-
-        if (!key.startsWith("FK-")) {
+        const result = await redeemOnSite(key, interaction.user.id);
+
+        if (!result.ok) {
+          // (o teu shouldLogInvalid aqui, se tiver)
           return interaction.reply({
-            content: "❌ Key must start with `FK-`.",
+            content: "❌ Invalid or expired key. Please generate a new one and try again.",
             ephemeral: true
           });
         }
-
 
         const expiresAt = await grantRoleForOneHour(interaction);
-        await postLog(client, `✅ <@${interaction.user.id}> — key approved. Access granted for **1 hour**.`);
 
         return interaction.reply({
           content: `✅ Key approved! You now have access for **1 hour**.\n⏳ Expires <t:${Math.floor(expiresAt / 1000)}:R>.`,
           ephemeral: true
         });
       }
-      return;
     }
 
     // Slash commands
