@@ -199,9 +199,11 @@ client.on("interactionCreate", async (interaction) => {
 
         const keyInput = new TextInputBuilder()
           .setCustomId("key_input")
-          .setLabel("Enter your FrostKey")
+          .setLabel("Enter your FrostKey code")
           .setPlaceholder("FK-XXXX-XXXX-XXXX-XXXX")
           .setStyle(TextInputStyle.Short)
+          .setMinLength(22)
+          .setMaxLength(22)
           .setRequired(true);
 
         const row = new ActionRowBuilder().addComponents(keyInput);
