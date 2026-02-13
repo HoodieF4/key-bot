@@ -215,8 +215,6 @@ client.on("interactionCreate", async (interaction) => {
     // Modal submit -> validate key
     if (interaction.isModalSubmit()) {
       if (interaction.customId === "verify_key_modal") {
-        const key = interaction.fields.getTextInputValue("key_input").trim();
-
         const key = interaction.fields.getTextInputValue("key_input")
           .trim()
           .toUpperCase();
