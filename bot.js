@@ -22,6 +22,7 @@ const LOCKR_URL = process.env.LOCKR_URL;            // https://lockr.so/Q03XMO7D
 
 const ACCESS_ROLE_ID = process.env.ACCESS_ROLE_ID || "1471729359449751694";
 const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "1471730794631266557";
+const PANEL_CHANNEL_ID = process.env.PANEL_CHANNEL_ID || "1471730464296534209";
 
 if (!BOT_TOKEN || !CLIENT_ID || !SITE_BASE_URL || !LOCKR_URL) {
   console.error("Missing required env vars. Need BOT_TOKEN, CLIENT_ID, SITE_BASE_URL, LOCKR_URL");
@@ -62,6 +63,11 @@ async function postLog(client, text) {
 
 async function registerCommands() {
   const commands = [
+    new SlashCommandBuilder()
+      .setName("setup")
+      .setDescription("Post the key panel in the panel channel.")
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    
     new SlashCommandBuilder()
       .setName("panel")
       .setDescription("Post the key panel (Generate + Redeem instructions).")
@@ -147,18 +153,16 @@ function recordFailureAndShouldLog(userId, cb) {
 // -------- Grant role + schedule expiry --------
 async function grantRoleForOneHour(client, interaction) {
   const guild = interaction.guild;
-  const member = await guild.members.fetch(interaction.user.id);
+  const member = interaction.member;
 
   const role = guild.roles.cache.get(ACCESS_ROLE_ID) || await guild.roles.fetch(ACCESS_ROLE_ID).catch(() => null);
   if (!role) throw new Error("Role not found. Check ACCESS_ROLE_ID.");
 
-  // Add role
-  await member.roles.add(role).catch((e) => { throw e; });
+  await member.roles.add(role);
 
   const t = nowMs();
   const expiresAt = t + oneHourMs();
 
-  // Store/replace grant (refreshes to +1h if redeemed again)
   db.run(
     `INSERT OR REPLACE INTO grants (user_id, guild_id, role_id, granted_at, expires_at) VALUES (?,?,?,?,?)`,
     [interaction.user.id, guild.id, ACCESS_ROLE_ID, t, expiresAt]
@@ -198,7 +202,7 @@ async function expireLoop(client) {
 
 // -------- Discord client --------
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+  intents: [GatewayIntentBits.Guilds],
   partials: [Partials.Channel]
 });
 
@@ -214,23 +218,83 @@ client.on("interactionCreate", async (interaction) => {
   try {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === "panel") {
+    if (interaction.isButton()) {
+      if (interaction.customId === "redeem_help") {
+        return interaction.reply({
+          content: "✅ To redeem your key, use:\n`/redeem key:YOUR_KEY_HERE`",
+          ephemeral: true
+        });
+      }
+    }
+
+    if (interaction.commandName === "setup") {
       const embed = new EmbedBuilder()
-        .setTitle("🔑 Key Panel")
+        .setTitle("🔞 Get Your FREE NSFW Content!")
         .setDescription(
-          "**Generate a key** by completing the tasks, then **redeem** it in Discord.\n\n" +
-          "1) Click **Generate Key**\n" +
-          "2) Complete tasks\n" +
-          "3) Copy your key\n" +
-          "4) Run: `/redeem <key>`\n\n" +
-          "✅ Access duration: **1 hour**"
-        );
+          "Follow the simple steps below to unlock your NSFW content:\n\n" +
+          "🔑 **Get Your Key**\n" +
+          "1. Click **Generate Key**\n" +
+          "2. Follow the site steps\n" +
+          "3. Copy your key\n\n" +
+          "✅ **Redeem Your Key**\n" +
+          "1. Click **Redeem Key**\n" +
+          "2. Paste your key\n" +
+          "3. Enjoy!"
+        )
+        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
+
+      // You said you'll add the image later:
+      // embed.setImage("https://YOUR_IMAGE_URL_HERE");
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Generate Key")
           .setStyle(ButtonStyle.Link)
-          .setURL(LOCKR_URL)
+          .setURL(LOCKR_URL),
+
+        new ButtonBuilder()
+          .setCustomId("redeem_help")
+          .setLabel("Redeem Key")
+          .setStyle(ButtonStyle.Success)
+      );
+
+      const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+      if (!ch) {
+        return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
+      }
+
+      await ch.send({ embeds: [embed], components: [row] });
+
+      return interaction.reply({ content: "✅ Panel message posted in the panel channel.", ephemeral: true });
+    }
+
+    
+    if (interaction.commandName === "panel") {
+      const embed = new EmbedBuilder()
+        .setTitle("🔞 Get Your FREE NSFW Content!")
+        .setDescription(
+          "Follow the simple steps below to unlock your NSFW content:\n\n" +
+          "🔑 **Get Your Key**\n" +
+         "1. Click **Generate Key**\n" +
+          "2. Follow the site steps\n" +
+          "3. Copy your key\n\n" +
+          "✅ **Redeem Your Key**\n" +
+          "1. Click **Redeem Key**\n" +
+          "2. Paste your key\n" +
+          "3. Enjoy!"
+        )
+        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel("Generate Key")
+          .setStyle(ButtonStyle.Link)
+          .setURL(LOCKR_URL),
+
+        new ButtonBuilder()
+          .setCustomId("redeem_help")
+          .setLabel("Redeem Key")
+          .setStyle(ButtonStyle.Success)
       );
 
       await interaction.reply({ embeds: [embed], components: [row] });
