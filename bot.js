@@ -15,7 +15,6 @@ const {
   TextInputStyle
 } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
-const fetch = require("node-fetch");
 
 // -------- ENV --------
 const BOT_TOKEN = process.env.BOT_TOKEN;
