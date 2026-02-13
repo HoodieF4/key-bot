@@ -109,18 +109,7 @@ async function redeemOnSite(key, userId) {
     error: data?.error || "invalid_key"
   };
 }
-``s`
 
-> Isto resolve mesmo que o teu site esteja a devolver 200 com `{ok:false}`.
-
----
-
-## 2) (Recomendado) Adiciona validação por REGEX no bot
-Mesmo com min/max 22, o user pode meter 22 chars “qualquer”. Então valida formato:
-
-Dentro do modal submit, **antes** de chamar `redeemOnSite`:
-
-```js
 const key = interaction.fields.getTextInputValue("key_input")
   .trim()
   .toUpperCase();
