@@ -248,6 +248,11 @@ client.on("interactionCreate", async (interaction) => {
 
         const expiresAt = await grantRoleForOneHour(interaction);
 
+        await postLog(
+          client,
+          `✅ <@${interaction.user.id}> redeemed a key successfully. Access granted for **1 hour**.`
+        );
+
         return interaction.reply({
           content: `✅ Key approved! You now have access for **1 hour**.\n⏳ Expires <t:${Math.floor(expiresAt / 1000)}:R>.`,
           ephemeral: true
