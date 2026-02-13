@@ -24,7 +24,7 @@ const SITE_BASE_URL = process.env.SITE_BASE_URL;    // e.g. https://key-site-n0v
 const LOCKR_URL = process.env.LOCKR_URL;            // https://lockr.so/Q03XMO7D
 
 const ACCESS_ROLE_ID = process.env.ACCESS_ROLE_ID || "1471729359449751694";
-const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "1471730794631266557";
+const PANEL_CHANNEL_ID = process.env.PANEL_CHANNEL_ID || "1471730464296534209";
 
 // Panel look
 const PANEL_TITLE = "🔞 Get Your FREE NSFW Content!";
@@ -243,37 +243,47 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === "panel") {
-      const embed = new EmbedBuilder()
-        .setTitle("🔞 Get Your FREE NSFW Content!")
-        .setDescription(
-          "Follow the simple steps below to unlock your NSFW content:\n\n" +
-          "🔑 **Get Your Key**\n" +
-          "1. Click **Generate Key**\n" +
-          "2. Follow the site steps\n" +
-          "3. Copy your key\n\n" +
-          "✅ **Redeem Your Key**\n" +
-          "1. Click **Redeem Key**\n" +
-          "2. Paste your key\n" +
-          "3. Enjoy!"
-        )
-        .setFooter({ text: "100% FREE • Unlimited Keys • No Limits • Start now" });
+  const embed = new EmbedBuilder()
+    .setTitle(PANEL_TITLE)
+    .setDescription(
+      "Follow the simple steps below to unlock your content:\n\n" +
+      "🔑 **Get Your Key**\n" +
+      "1. Click **Generate Key**\n" +
+      "2. Complete the tasks\n" +
+      "3. Copy your key\n\n" +
+      "✅ **Verify Your Key**\n" +
+      "1. Click **Verify Key**\n" +
+      "2. Paste your key\n" +
+      "3. Enjoy!"
+    )
+    .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 👿" });
 
-      // You said you'll add the image later:
-      // embed.setImage("https://YOUR_IMAGE_URL_HERE");
+  // Add image
+  if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel("Generate Key")
-          .setEmoji("🔑")
-          .setStyle(ButtonStyle.Link)
-          .setURL(LOCKR_URL),
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel("Generate Key")
+      .setEmoji("🔑")
+      .setStyle(ButtonStyle.Link)
+      .setURL(LOCKR_URL),
 
-        new ButtonBuilder()
-          .setCustomId("redeem_help")
-          .setLabel("Redeem Key")
-          .setEmoji("✅")
-          .setStyle(ButtonStyle.Success)
+    new ButtonBuilder()
+      .setCustomId("verify_key")
+      .setLabel("Verify Key")
+      .setEmoji("✅")
+      .setStyle(ButtonStyle.Success)
   );
+
+  const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
+  if (!ch) {
+    return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
+  }
+
+  await ch.send({ embeds: [embed], components: [row] });
+
+  return interaction.reply({ content: "✅ Panel posted.", ephemeral: true });
+}
 
   const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
   if (!ch) {
