@@ -28,7 +28,7 @@ const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "1471730794631266557";
 
 // Panel look
 const PANEL_TITLE = "🔞 Get Your FREE NSFW Content!";
-const PANEL_IMAGE_URL = process.env.PANEL_IMAGE_URL || ""; // optional (set later)
+const PANEL_IMAGE_URL = process.env.PANEL_IMAGE_URL || "https://media.discordapp.net/attachments/1146456316290797678/1471767031295639703/image_4.png?ex=6990215c&is=698ecfdc&hm=72ce3503ad3f87539e2f79512cbbb1ef3ca8a555ccdc7a4633f9ef214b07717c&=&format=webp&quality=lossless&width=2168&height=1355"; // optional (set later)
 
 if (!BOT_TOKEN || !CLIENT_ID || !SITE_BASE_URL || !LOCKR_URL) {
   console.error("Missing required env vars. Need BOT_TOKEN, CLIENT_ID, SITE_BASE_URL, LOCKR_URL");
@@ -260,12 +260,14 @@ client.on("interactionCreate", async (interaction) => {
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Generate Key")
+          .setEmoji("🔑")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
           .setCustomId("verify_key")
           .setLabel("Verify Key")
+          .setEmoji("✅")
           .setStyle(ButtonStyle.Success)
       );
 
