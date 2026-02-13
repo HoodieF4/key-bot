@@ -184,7 +184,7 @@ const client = new Client({
 client.once("clientReady", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   await registerCommands();
-  await postLog(client, "🤖 FrostKey is online.");
+  await postLog(client, "");
   expireLoop(client);
 });
 
