@@ -9,7 +9,10 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
 } = require("discord.js");
 const sqlite3 = require("sqlite3").verbose();
 
@@ -22,7 +25,10 @@ const LOCKR_URL = process.env.LOCKR_URL;            // https://lockr.so/Q03XMO7D
 
 const ACCESS_ROLE_ID = process.env.ACCESS_ROLE_ID || "1471729359449751694";
 const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "1471730794631266557";
-const PANEL_CHANNEL_ID = process.env.PANEL_CHANNEL_ID || "1471730464296534209";
+
+// Panel look
+const PANEL_TITLE = "🔞 Get Your FREE NSFW Content!";
+const PANEL_IMAGE_URL = process.env.PANEL_IMAGE_URL || ""; // optional (set later)
 
 if (!BOT_TOKEN || !CLIENT_ID || !SITE_BASE_URL || !LOCKR_URL) {
   console.error("Missing required env vars. Need BOT_TOKEN, CLIENT_ID, SITE_BASE_URL, LOCKR_URL");
@@ -42,12 +48,11 @@ db.serialize(() => {
     )
   `);
 
-  // Track invalid attempts per hour: only log first invalid per hour per user
+  // Log invalid key only once per hour per user
   db.run(`
     CREATE TABLE IF NOT EXISTS failures (
       user_id TEXT PRIMARY KEY,
       window_start INTEGER NOT NULL,
-      count INTEGER NOT NULL,
       logged INTEGER NOT NULL
     )
   `);
@@ -61,26 +66,13 @@ async function postLog(client, text) {
   if (ch) await ch.send(text).catch(() => {});
 }
 
+// -------- Slash commands --------
 async function registerCommands() {
   const commands = [
     new SlashCommandBuilder()
-      .setName("setup")
-      .setDescription("Post the key panel in the panel channel.")
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-    
-    new SlashCommandBuilder()
       .setName("panel")
-      .setDescription("Post the key panel (Generate + Redeem instructions).")
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-    new SlashCommandBuilder()
-      .setName("redeem")
-      .setDescription("Redeem a key and get 1-hour access.")
-      .addStringOption(opt =>
-        opt.setName("key")
-          .setDescription("Paste your key here")
-          .setRequired(true)
-      )
+      .setDescription("Post the key panel (Generate + Verify buttons).")
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   ].map(c => c.toJSON());
 
   const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
@@ -110,48 +102,30 @@ async function redeemOnSite(key, userId) {
   return { ok: false, status: resp.status, error: data?.error || "unknown" };
 }
 
-// -------- Failure rate-limit (log only once per hour per user) --------
-function recordFailureAndShouldLog(userId, cb) {
+// -------- Failure log rate-limit (1 log per hour per user) --------
+function shouldLogInvalid(userId, cb) {
   const t = nowMs();
   db.get(`SELECT * FROM failures WHERE user_id=?`, [userId], (err, row) => {
-    if (err) return cb(true); // if DB fails, still log to not hide issues
+    if (err) return cb(true);
 
     if (!row) {
-      db.run(
-        `INSERT INTO failures (user_id, window_start, count, logged) VALUES (?,?,?,?)`,
-        [userId, t, 1, 1]
-      );
-      return cb(true); // first failure => log
+      db.run(`INSERT INTO failures (user_id, window_start, logged) VALUES (?,?,?)`, [userId, t, 1]);
+      return cb(true);
     }
 
-    const windowStart = row.window_start;
-    const within = (t - windowStart) < oneHourMs();
-
+    const within = (t - row.window_start) < oneHourMs();
     if (!within) {
-      // reset window
-      db.run(
-        `UPDATE failures SET window_start=?, count=?, logged=? WHERE user_id=?`,
-        [t, 1, 1, userId]
-      );
-      return cb(true); // log first failure of new hour window
+      db.run(`UPDATE failures SET window_start=?, logged=? WHERE user_id=?`, [t, 1, userId]);
+      return cb(true);
     }
 
-    // still within hour
-    const newCount = row.count + 1;
-    const alreadyLogged = row.logged === 1;
-
-    db.run(
-      `UPDATE failures SET count=? WHERE user_id=?`,
-      [newCount, userId]
-    );
-
-    // Your rule: even if 5 wrong keys in 1h, only log the first one.
-    return cb(!alreadyLogged);
+    // within 1 hour and already logged => don't log again
+    return cb(row.logged !== 1);
   });
 }
 
 // -------- Grant role + schedule expiry --------
-async function grantRoleForOneHour(client, interaction) {
+async function grantRoleForOneHour(interaction) {
   const guild = interaction.guild;
   const member = interaction.member;
 
@@ -171,7 +145,7 @@ async function grantRoleForOneHour(client, interaction) {
   return expiresAt;
 }
 
-async function expireLoop(client) {
+function expireLoop(client) {
   setInterval(() => {
     const t = nowMs();
     db.all(`SELECT * FROM grants WHERE expires_at <= ?`, [t], async (err, rows) => {
@@ -197,7 +171,7 @@ async function expireLoop(client) {
         }
       }
     });
-  }, 15_000); // check every 15s
+  }, 15_000);
 }
 
 // -------- Discord client --------
@@ -206,132 +180,96 @@ const client = new Client({
   partials: [Partials.Channel]
 });
 
-client.once("ready", async () => {
+client.once("clientReady", async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   await registerCommands();
-  await postLog(client, "🤖 Key bot is online.");
+  await postLog(client, "🤖 FrostKey is online.");
   expireLoop(client);
 });
 
-// Interactions
 client.on("interactionCreate", async (interaction) => {
   try {
-    if (!interaction.isChatInputCommand()) return;
-
+    // Button -> open modal
     if (interaction.isButton()) {
-      if (interaction.customId === "redeem_help") {
+      if (interaction.customId === "verify_key") {
+        const modal = new ModalBuilder()
+          .setCustomId("verify_key_modal")
+          .setTitle("Verify Key");
+
+        const keyInput = new TextInputBuilder()
+          .setCustomId("key_input")
+          .setLabel("Paste your key")
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+        const row = new ActionRowBuilder().addComponents(keyInput);
+        modal.addComponents(row);
+
+        return interaction.showModal(modal);
+      }
+      return;
+    }
+
+    // Modal submit -> validate key
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId === "verify_key_modal") {
+        const key = interaction.fields.getTextInputValue("key_input").trim();
+
+        const result = await redeemOnSite(key, interaction.user.id);
+
+        if (!result.ok) {
+          shouldLogInvalid(interaction.user.id, async (logIt) => {
+            if (logIt) await postLog(client, `❌ <@${interaction.user.id}> — invalid key attempt.`);
+          });
+
+          return interaction.reply({
+            content: "❌ Invalid or expired key. Please generate a new one and try again.",
+            ephemeral: true
+          });
+        }
+
+        const expiresAt = await grantRoleForOneHour(interaction);
+        await postLog(client, `✅ <@${interaction.user.id}> — key approved. Access granted for **1 hour**.`);
+
         return interaction.reply({
-          content: "✅ To redeem your key, use:\n`/redeem key:YOUR_KEY_HERE`",
+          content: `✅ Key approved! You now have access for **1 hour**.\n⏳ Expires <t:${Math.floor(expiresAt / 1000)}:R>.`,
           ephemeral: true
         });
       }
+      return;
     }
 
-    if (interaction.commandName === "setup") {
-      const embed = new EmbedBuilder()
-        .setTitle("🔞 Get Your FREE NSFW Content!")
-        .setDescription(
-          "Follow the simple steps below to unlock your NSFW content:\n\n" +
-          "🔑 **Get Your Key**\n" +
-          "1. Click **Generate Key**\n" +
-          "2. Follow the site steps\n" +
-          "3. Copy your key\n\n" +
-          "✅ **Redeem Your Key**\n" +
-          "1. Click **Redeem Key**\n" +
-          "2. Paste your key\n" +
-          "3. Enjoy!"
-        )
-        .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 😈" });
+    // Slash commands
+    if (!interaction.isChatInputCommand()) return;
 
-      // You said you'll add the image later:
-        .setImage("https://media.discordapp.net/attachments/1146456316290797678/1471767031295639703/image_4.png?ex=6990215c&is=698ecfdc&hm=72ce3503ad3f87539e2f79512cbbb1ef3ca8a555ccdc7a4633f9ef214b07717c&=&format=webp&quality=lossless&width=2168&height=1355");
+    if (interaction.commandName === "panel") {
+      const embed = new EmbedBuilder()
+        .setTitle(PANEL_TITLE)
+        .setDescription(
+          "Follow the steps below to unlock access:\n\n" +
+          "**1) Generate a Key**\n" +
+          "• Click **Generate Key** and complete the tasks\n\n" +
+          "**2) Verify Your Key**\n" +
+          "• Click **Verify Key** and paste your key\n\n" +
+          "✅ Access duration: **1 hour**"
+        )
+        .setFooter({ text: "FrostKey • Keys • Access • Daily Drops" });
+
+      if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setLabel("Generate Key")
-          .setEmoji("🔑")
           .setStyle(ButtonStyle.Link)
           .setURL(LOCKR_URL),
 
         new ButtonBuilder()
-          .setCustomId("redeem_help")
-          .setLabel("Redeem Key")
-          .setEmoji("✅")
+          .setCustomId("verify_key")
+          .setLabel("Verify Key")
           .setStyle(ButtonStyle.Success)
       );
 
-      const ch = await interaction.guild.channels.fetch(PANEL_CHANNEL_ID).catch(() => null);
-      if (!ch) {
-        return interaction.reply({ content: "❌ Panel channel not found. Check PANEL_CHANNEL_ID.", ephemeral: true });
-      }
-
-      await ch.send({ embeds: [embed], components: [row] });
-
-      return interaction.reply({ content: "✅ Panel message posted in the panel channel.", ephemeral: true });
-    }
-
-    
-    if (interaction.commandName === "panel") {
-      const embed = new EmbedBuilder()
-        .setTitle("🔞 Get Your FREE NSFW Content!")
-        .setDescription(
-          "Follow the simple steps below to unlock your NSFW content:\n\n" +
-          "🔑 **Get Your Key**\n" +
-         "1. Click **Generate Key**\n" +
-          "2. Follow the site steps\n" +
-          "3. Copy your key\n\n" +
-          "✅ **Redeem Your Key**\n" +
-          "1. Click **Redeem Key**\n" +
-          "2. Paste your key\n" +
-          "3. Enjoy!"
-        )
-        .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 😈" });
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel("🔑 Generate Key")
-          .setStyle(ButtonStyle.Link)
-          .setURL(LOCKR_URL),
-
-        new ButtonBuilder()
-          .setCustomId("redeem_help")
-          .setLabel("✅ Redeem Key")
-          .setStyle(ButtonStyle.Success)
-      );
-
-      await interaction.reply({ embeds: [embed], components: [row] });
-      return;
-    }
-
-    if (interaction.commandName === "redeem") {
-      const key = interaction.options.getString("key", true).trim();
-
-      // Call the site
-      const result = await redeemOnSite(key, interaction.user.id);
-
-      if (!result.ok) {
-        // Always tell the user (ephemeral), but log only once per hour per user
-        recordFailureAndShouldLog(interaction.user.id, async (shouldLog) => {
-          if (shouldLog) {
-            await postLog(client, `❌ <@${interaction.user.id}> — invalid key attempt.`);
-          }
-        });
-
-        return interaction.reply({
-          content: "❌ Invalid or expired key. Please generate a new one and try again.",
-          ephemeral: true
-        });
-      }
-
-      // Success -> grant role for 1 hour
-      const expiresAt = await grantRoleForOneHour(client, interaction);
-
-      await postLog(client, `✅ <@${interaction.user.id}> — key approved. Access granted for **1 hour**.`);
-
-      return interaction.reply({
-        content: `✅ Key approved! You now have access for **1 hour**.\n⏳ Expires <t:${Math.floor(expiresAt / 1000)}:R>.`,
-        ephemeral: true
-      });
+      return interaction.reply({ embeds: [embed], components: [row] });
     }
   } catch (err) {
     console.error(err);
