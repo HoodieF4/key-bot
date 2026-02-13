@@ -242,7 +242,7 @@ client.on("interactionCreate", async (interaction) => {
     // Slash commands
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === "panel") {
+if (interaction.commandName === "panel") {
   const embed = new EmbedBuilder()
     .setTitle(PANEL_TITLE)
     .setDescription(
@@ -258,7 +258,6 @@ client.on("interactionCreate", async (interaction) => {
     )
     .setFooter({ text: "💦 100% FREE • Unlimited Keys • No Limits • Start now 👿" });
 
-  // Add image
   if (PANEL_IMAGE_URL) embed.setImage(PANEL_IMAGE_URL);
 
   const row = new ActionRowBuilder().addComponents(
@@ -281,7 +280,6 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   await ch.send({ embeds: [embed], components: [row] });
-
   return interaction.reply({ content: "✅ Panel posted.", ephemeral: true });
 }
 
