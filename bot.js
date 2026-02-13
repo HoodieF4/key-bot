@@ -195,11 +195,12 @@ client.on("interactionCreate", async (interaction) => {
       if (interaction.customId === "verify_key") {
         const modal = new ModalBuilder()
           .setCustomId("verify_key_modal")
-          .setTitle("Verify Key");
+          .setTitle("🔑 Redeem Your FrostKey");
 
         const keyInput = new TextInputBuilder()
           .setCustomId("key_input")
-          .setLabel("Paste your key")
+          .setLabel("Enter your FrostKey")
+          .setPlaceholder("FK-XXXX-XXXX-XXXX-XXXX")
           .setStyle(TextInputStyle.Short)
           .setRequired(true);
 
